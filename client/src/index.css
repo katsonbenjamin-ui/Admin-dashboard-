@@ -1,0 +1,37 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', -apple-system, sans-serif; -webkit-font-smoothing: antialiased; background: #050507; color: #fff; min-height: 100vh; }
+
+.glass {
+  background: rgba(255,255,255,0.028);
+  border: 1px solid rgba(255,255,255,0.065);
+  border-radius: 1rem;
+  backdrop-filter: blur(8px);
+}
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
+  padding: 0.5rem 0.875rem; border-radius: 0.6rem; border: 1px solid transparent;
+  font-weight: 600; font-size: 0.8rem; cursor: pointer; transition: all 0.15s; white-space: nowrap;
+}
+.btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.btn-purple { background: rgba(168,85,247,0.15); border-color: rgba(168,85,247,0.35); color: #a855f7; }
+.btn-purple:not(:disabled):hover { background: rgba(168,85,247,0.25); }
+.btn-green  { background: rgba(74,222,128,0.08);  border-color: rgba(74,222,128,0.2);  color: #4ade80; }
+.btn-green:not(:disabled):hover  { background: rgba(74,222,128,0.15); }
+.btn-amber  { background: rgba(251,191,36,0.08);  border-color: rgba(251,191,36,0.2);  color: #fbbf24; }
+.btn-amber:not(:disabled):hover  { background: rgba(251,191,36,0.15); }
+.btn-red    { background: rgba(248,113,113,0.08); border-color: rgba(248,113,113,0.2); color: #f87171; }
+.btn-red:not(:disabled):hover    { background: rgba(248,113,113,0.15); }
+.btn-ghost  { background: none;                   border-color: rgba(255,255,255,0.1); color: #475569; }
+.btn-ghost:not(:disabled):hover  { background: rgba(255,255,255,0.05); color: #fff; }
+
+.input {
+  width: 100%; padding: 0.6rem 0.875rem;
+  background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 0.6rem; color: #fff; font-size: 0.85rem; outline: none; transition: border-color 0.15s;
+}
+.input:focus { border-color: rgba(168,85,247,0.4); }
+.input::placeholder { color: #334155; }
