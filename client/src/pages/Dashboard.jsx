@@ -4,7 +4,7 @@ import { makeApi } from '../hooks/useApi';
 import {
   Bot, LogOut, Users, CheckCircle2, XCircle, Clock,
   Plus, RefreshCw, Power, PowerOff, Trash2, X, RotateCcw,
-  Copy, ExternalLink, Search, AlertCircle, Zap
+  Copy, ExternalLink, Search, Zap
 } from 'lucide-react';
 
 const PLAN_OPTIONS = ['basic','standard','premium','vip'];
@@ -25,23 +25,11 @@ function StatCard({ label, value, color, icon: Icon }) {
   return (
     <motion.div initial={{opacity:0,y:12}} animate={{opacity:1,y:0}}
       style={{
-        background:'rgba(255,255,255,0.028)',
-        border:'1px solid rgba(255,255,255,0.065)',
-        borderRadius:'0.875rem',
-        backdropFilter:'blur(8px)',
-        padding:'0.875rem 1rem',
-        display:'flex',
-        alignItems:'center',
-        gap:'0.875rem',
+        background:'rgba(255,255,255,0.028)',border:'1px solid rgba(255,255,255,0.065)',
+        borderRadius:'0.875rem',backdropFilter:'blur(8px)',padding:'0.875rem 1rem',
+        display:'flex',alignItems:'center',gap:'0.875rem',
       }}>
-      <div style={{
-        background: color + '18',
-        border: '1px solid ' + color + '30',
-        borderRadius: '0.6rem',
-        padding: '0.5rem',
-        display: 'flex',
-        flexShrink: 0,
-      }}>
+      <div style={{background:color+'18',border:'1px solid '+color+'30',borderRadius:'0.6rem',padding:'0.5rem',display:'flex',flexShrink:0}}>
         <Icon size={16} color={color}/>
       </div>
       <div style={{minWidth:0}}>
@@ -53,30 +41,19 @@ function StatCard({ label, value, color, icon: Icon }) {
 }
 
 function StatusPill({ user }) {
-  const now = new Date();
-  const isExpired  = user.expiry_date && new Date(user.expiry_date) < now;
-  const isDisabled = !user.is_active;
-
-  if (isDisabled) return <Pill label="DISABLED" color="#ef4444"/>;
-  if (isExpired)  return <Pill label="EXPIRED"  color="#fbbf24"/>;
-
+  const now       = new Date();
+  const isExpired = user.expiry_date && new Date(user.expiry_date) < now;
+  if (!user.is_active) return <Pill label="DISABLED" color="#ef4444"/>;
+  if (isExpired)       return <Pill label="EXPIRED"  color="#fbbf24"/>;
   const status = user.runtime_status || 'created';
   const meta   = RUNTIME_STATUS_META[status] || RUNTIME_STATUS_META.created;
   const pulse  = ['validating','starting','active'].includes(status);
-
   return (
-    <span style={{
-      display:'inline-flex',alignItems:'center',gap:'0.35rem',
-      padding:'0.15rem 0.6rem',borderRadius:'999px',fontSize:'0.6rem',
-      fontWeight:700,letterSpacing:'0.08em',color:meta.color,
-      background:meta.color+'18',border:'1px solid '+meta.color+'30'
-    }}>
-      <span style={{
-        width:'5px',height:'5px',borderRadius:'50%',
-        background:meta.color,flexShrink:0,
-        boxShadow: pulse ? `0 0 6px ${meta.color}` : 'none',
-        animation: pulse ? 'bxpulse 2s infinite' : 'none',
-      }}/>
+    <span style={{display:'inline-flex',alignItems:'center',gap:'0.35rem',padding:'0.15rem 0.6rem',
+      borderRadius:'999px',fontSize:'0.6rem',fontWeight:700,letterSpacing:'0.08em',
+      color:meta.color,background:meta.color+'18',border:'1px solid '+meta.color+'30'}}>
+      <span style={{width:'5px',height:'5px',borderRadius:'50%',background:meta.color,flexShrink:0,
+        boxShadow:pulse?`0 0 6px ${meta.color}`:'none',animation:pulse?'bxpulse 2s infinite':'none'}}/>
       {meta.label}
     </span>
   );
@@ -132,12 +109,7 @@ export default function Dashboard({ token, onLogout }) {
   }, [token]);
 
   useEffect(() => { load(); }, [load]);
-
-  // Auto-refresh every 10s for real-time status
-  useEffect(() => {
-    const t = setInterval(load, 10000);
-    return () => clearInterval(t);
-  }, [load]);
+  useEffect(() => { const t = setInterval(load, 10000); return () => clearInterval(t); }, [load]);
 
   const filtered = users.filter(u =>
     !search || u.username.toLowerCase().includes(search.toLowerCase()) ||
@@ -153,8 +125,7 @@ export default function Dashboard({ token, onLogout }) {
         plan: newUser.plan,
       });
       showToast(`Created @${d.user.username} — password: "${d.password}"`, true);
-      setModal(null); setNewUser({ username:'', expiresInDays:'30', plan:'basic' });
-      load();
+      setModal(null); setNewUser({ username:'', expiresInDays:'30', plan:'basic' }); load();
     } catch(e) { showToast(e.message, false); }
   };
 
@@ -169,8 +140,7 @@ export default function Dashboard({ token, onLogout }) {
   const toggleActive = async (user) => {
     try {
       await api.updateUser(user.id, { is_active: !user.is_active });
-      showToast(`@${user.username} ${user.is_active?'disabled':'enabled'}.`, true);
-      load();
+      showToast(`@${user.username} ${user.is_active?'disabled':'enabled'}.`, true); load();
     } catch(e) { showToast(e.message, false); }
   };
 
@@ -190,9 +160,9 @@ export default function Dashboard({ token, onLogout }) {
   };
 
   const panelUrl = (user) => {
-    const base = import.meta.env.VITE_CLIENT_PANEL_URL || '';
-    if (!base) return `[Set VITE_CLIENT_PANEL_URL env var]/?token=${user.panel_token}`;
-    return `${base.replace(/\/$/,'')}/?token=${user.panel_token}`;
+    const base = (import.meta.env.VITE_CLIENT_PANEL_URL || '').replace(/\/$/, '');
+    if (!base) return `[Set VITE_CLIENT_PANEL_URL]/?token=${user.panel_token}`;
+    return `${base}/?token=${user.panel_token}`;
   };
 
   const copyText = (text, label) => { navigator.clipboard.writeText(text); showToast(label + ' copied!', true); };
@@ -200,8 +170,7 @@ export default function Dashboard({ token, onLogout }) {
   const expiryStr = (u) => {
     if (!u.expiry_date) return <span style={{color:'#334155'}}>—</span>;
     const d = new Date(u.expiry_date);
-    const expired = d < new Date();
-    return <span style={{color:expired?'#f87171':'#94a3b8',fontSize:'0.72rem'}}>{d.toLocaleDateString()}</span>;
+    return <span style={{color:d<new Date()?'#f87171':'#94a3b8',fontSize:'0.72rem'}}>{d.toLocaleDateString()}</span>;
   };
 
   return (
@@ -215,8 +184,8 @@ export default function Dashboard({ token, onLogout }) {
       <AnimatePresence>
         {toast.text && (
           <motion.div initial={{opacity:0,y:-24}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-24}}
-            style={{position:'fixed',top:'1rem',left:'50%',transform:'translateX(-50%)',
-              zIndex:200,background:toast.ok?'rgba(74,222,128,0.12)':'rgba(248,113,113,0.12)',
+            style={{position:'fixed',top:'1rem',left:'50%',transform:'translateX(-50%)',zIndex:200,
+              background:toast.ok?'rgba(74,222,128,0.12)':'rgba(248,113,113,0.12)',
               border:'1px solid '+(toast.ok?'rgba(74,222,128,0.3)':'rgba(248,113,113,0.3)'),
               borderRadius:'0.75rem',padding:'0.625rem 1.25rem',fontSize:'0.82rem',
               color:toast.ok?'#4ade80':'#f87171',maxWidth:'480px',textAlign:'center',backdropFilter:'blur(8px)'}}>
@@ -231,8 +200,7 @@ export default function Dashboard({ token, onLogout }) {
         <div style={{maxWidth:'1200px',margin:'0 auto',padding:'0.75rem 1.25rem',
           display:'flex',alignItems:'center',justifyContent:'space-between',gap:'1rem'}}>
           <div style={{display:'flex',alignItems:'center',gap:'0.625rem'}}>
-            <div style={{background:'rgba(168,85,247,0.12)',border:'1px solid rgba(168,85,247,0.3)',
-              borderRadius:'0.6rem',padding:'0.375rem'}}>
+            <div style={{background:'rgba(168,85,247,0.12)',border:'1px solid rgba(168,85,247,0.3)',borderRadius:'0.6rem',padding:'0.375rem'}}>
               <Bot size={18} color="#a855f7"/>
             </div>
             <div>
@@ -244,19 +212,15 @@ export default function Dashboard({ token, onLogout }) {
             <button onClick={load} disabled={loading} className="btn btn-ghost" style={{padding:'0.45rem 0.75rem'}}>
               <RefreshCw size={13} style={loading?{animation:'bxspin 1s linear infinite'}:undefined}/>
             </button>
-            <button onClick={()=>setModal('create')} className="btn btn-purple">
-              <Plus size={14}/> New Client
-            </button>
-            <button onClick={onLogout} className="btn btn-ghost" style={{padding:'0.45rem 0.6rem'}}>
-              <LogOut size={14}/>
-            </button>
+            <button onClick={()=>setModal('create')} className="btn btn-purple"><Plus size={14}/> New Client</button>
+            <button onClick={onLogout} className="btn btn-ghost" style={{padding:'0.45rem 0.6rem'}}><LogOut size={14}/></button>
           </div>
         </div>
       </header>
 
       <main style={{maxWidth:'1200px',margin:'0 auto',padding:'1.25rem',display:'flex',flexDirection:'column',gap:'1.25rem'}}>
 
-        {/* Stats — horizontal row */}
+        {/* Stats */}
         <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(160px,1fr))',gap:'0.75rem'}}>
           <StatCard label="Total Clients" value={stats.total}    color="#a855f7" icon={Users}/>
           <StatCard label="Active"        value={stats.active}   color="#4ade80" icon={CheckCircle2}/>
@@ -267,8 +231,7 @@ export default function Dashboard({ token, onLogout }) {
 
         {/* Users table */}
         <div className="glass" style={{overflow:'hidden'}}>
-          <div style={{padding:'0.875rem 1rem',borderBottom:'1px solid rgba(255,255,255,0.06)',
-            display:'flex',alignItems:'center',gap:'0.75rem'}}>
+          <div style={{padding:'0.875rem 1rem',borderBottom:'1px solid rgba(255,255,255,0.06)',display:'flex',alignItems:'center',gap:'0.75rem'}}>
             <Search size={14} color="#334155" style={{flexShrink:0}}/>
             <input className="input" placeholder="Search by username or session ID..."
               value={search} onChange={e=>setSearch(e.target.value)}
@@ -280,7 +243,7 @@ export default function Dashboard({ token, onLogout }) {
             <table style={{width:'100%',borderCollapse:'collapse',fontSize:'0.8rem'}}>
               <thead>
                 <tr style={{borderBottom:'1px solid rgba(255,255,255,0.06)'}}>
-                  {['Username','Status','Plan','Expires','Session ID','Actions'].map(h => (
+                  {['Username','Status','Plan','Expires','Session ID','Actions'].map(h=>(
                     <th key={h} style={{padding:'0.625rem 1rem',textAlign:'left',fontSize:'0.6rem',
                       fontWeight:700,letterSpacing:'0.1em',color:'#475569',textTransform:'uppercase',whiteSpace:'nowrap'}}>
                       {h}
@@ -289,11 +252,11 @@ export default function Dashboard({ token, onLogout }) {
                 </tr>
               </thead>
               <tbody>
-                {filtered.length === 0 ? (
+                {filtered.length===0 ? (
                   <tr><td colSpan={6} style={{padding:'2.5rem',textAlign:'center',color:'#1e293b'}}>
-                    {search ? 'No results.' : 'No clients yet. Create your first one above.'}
+                    {search?'No results.':'No clients yet. Create your first one above.'}
                   </td></tr>
-                ) : filtered.map((u,i) => (
+                ) : filtered.map((u,i)=>(
                   <motion.tr key={u.id} initial={{opacity:0,x:-8}} animate={{opacity:1,x:0}}
                     transition={{delay:i*0.02}}
                     style={{borderBottom:'1px solid rgba(255,255,255,0.04)',transition:'background 0.1s'}}
@@ -306,38 +269,28 @@ export default function Dashboard({ token, onLogout }) {
                     </td>
                     <td style={{padding:'0.75rem 1rem'}}>{expiryStr(u)}</td>
                     <td style={{padding:'0.75rem 1rem',maxWidth:'160px'}}>
-                      {u.session_id ? (
-                        <span style={{fontFamily:'monospace',fontSize:'0.68rem',color:'#a855f7',
-                          overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',display:'block'}}>
-                          {u.session_id}
-                        </span>
-                      ) : <span style={{color:'#1e293b',fontSize:'0.72rem'}}>No session</span>}
+                      {u.session_id
+                        ? <span style={{fontFamily:'monospace',fontSize:'0.68rem',color:'#a855f7',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',display:'block'}}>{u.session_id}</span>
+                        : <span style={{color:'#1e293b',fontSize:'0.72rem'}}>No session</span>}
                     </td>
                     <td style={{padding:'0.75rem 1rem'}}>
                       <div style={{display:'flex',gap:'0.3rem',flexWrap:'wrap'}}>
-                        {/* Renew */}
                         <button onClick={()=>{setRenewDays('30');setModal({type:'renew',user:u});}}
-                          className="btn btn-green" style={{padding:'0.3rem 0.6rem',fontSize:'0.7rem',gap:'0.25rem'}}
-                          title="Renew subscription">
+                          className="btn btn-green" style={{padding:'0.3rem 0.6rem',fontSize:'0.7rem',gap:'0.25rem'}} title="Renew">
                           <RefreshCw size={11}/> Renew
                         </button>
-                        {/* Pause / Resume */}
                         <button onClick={()=>toggleActive(u)}
                           className={u.is_active?'btn btn-amber':'btn btn-ghost'}
                           style={{padding:'0.3rem 0.6rem',fontSize:'0.7rem',gap:'0.25rem'}}
-                          title={u.is_active ? 'Disable access' : 'Enable access'}>
-                          {u.is_active ? <><PowerOff size={11}/> Pause</> : <><Power size={11}/> Resume</>}
+                          title={u.is_active?'Disable':'Enable'}>
+                          {u.is_active?<><PowerOff size={11}/> Pause</>:<><Power size={11}/> Resume</>}
                         </button>
-                        {/* Copy panel link */}
                         <button onClick={()=>setModal({type:'panel',user:u})}
-                          className="btn btn-ghost" style={{padding:'0.3rem 0.5rem',fontSize:'0.7rem'}}
-                          title="Panel link">
+                          className="btn btn-ghost" style={{padding:'0.3rem 0.5rem',fontSize:'0.7rem'}} title="Panel link">
                           <ExternalLink size={11}/>
                         </button>
-                        {/* Delete */}
                         <button onClick={()=>setModal({type:'delete',user:u})}
-                          className="btn btn-red" style={{padding:'0.3rem 0.5rem',fontSize:'0.7rem'}}
-                          title="Delete client">
+                          className="btn btn-red" style={{padding:'0.3rem 0.5rem',fontSize:'0.7rem'}} title="Delete">
                           <Trash2 size={11}/>
                         </button>
                       </div>
@@ -355,7 +308,7 @@ export default function Dashboard({ token, onLogout }) {
 
         {/* Create */}
         {modal === 'create' && (
-          <Modal title="Create Client Panel" onClose={()=>setModal(null)}>
+          <Modal title="Create Client" onClose={()=>setModal(null)}>
             <div style={{display:'flex',flexDirection:'column',gap:'0.75rem'}}>
               <div>
                 <label style={{fontSize:'0.7rem',color:'#475569',fontWeight:600,display:'block',marginBottom:'0.35rem'}}>Username</label>
@@ -366,22 +319,17 @@ export default function Dashboard({ token, onLogout }) {
                 <div>
                   <label style={{fontSize:'0.7rem',color:'#475569',fontWeight:600,display:'block',marginBottom:'0.35rem'}}>Expiry (days)</label>
                   <input className="input" type="number" min="1" placeholder="30"
-                    value={newUser.expiresInDays}
-                    onChange={e=>setNewUser(p=>({...p,expiresInDays:e.target.value}))}/>
+                    value={newUser.expiresInDays} onChange={e=>setNewUser(p=>({...p,expiresInDays:e.target.value}))}/>
                 </div>
                 <div>
                   <label style={{fontSize:'0.7rem',color:'#475569',fontWeight:600,display:'block',marginBottom:'0.35rem'}}>Plan</label>
-                  <select className="input" value={newUser.plan}
-                    onChange={e=>setNewUser(p=>({...p,plan:e.target.value}))}
-                    style={{cursor:'pointer'}}>
+                  <select className="input" value={newUser.plan} onChange={e=>setNewUser(p=>({...p,plan:e.target.value}))} style={{cursor:'pointer'}}>
                     {PLAN_OPTIONS.map(p=><option key={p} value={p} style={{background:'#0f0a1a'}}>{p}</option>)}
                   </select>
                 </div>
               </div>
-              <div style={{fontSize:'0.72rem',color:'#334155',padding:'0.625rem 0.75rem',
-                background:'rgba(0,0,0,0.35)',borderRadius:'0.5rem',lineHeight:1.6}}>
-                Default password: <strong style={{color:'#a855f7'}}>user</strong><br/>
-                A unique panel link will be generated. Share it with the client so they can log in automatically.
+              <div style={{fontSize:'0.72rem',color:'#334155',padding:'0.625rem 0.75rem',background:'rgba(0,0,0,0.35)',borderRadius:'0.5rem',lineHeight:1.6}}>
+                Client logs in using the <strong style={{color:'#a855f7'}}>invite token</strong> from the panel link — no password needed.
               </div>
               <div style={{display:'flex',gap:'0.5rem',justifyContent:'flex-end',marginTop:'0.25rem'}}>
                 <button onClick={()=>setModal(null)} className="btn btn-ghost">Cancel</button>
@@ -392,18 +340,16 @@ export default function Dashboard({ token, onLogout }) {
         )}
 
         {/* Renew */}
-        {modal?.type === 'renew' && (
+        {modal?.type==='renew' && (
           <Modal title={`Renew @${modal.user.username}`} onClose={()=>setModal(null)}>
             <div style={{display:'flex',flexDirection:'column',gap:'0.75rem'}}>
               <div>
                 <label style={{fontSize:'0.7rem',color:'#475569',fontWeight:600,display:'block',marginBottom:'0.35rem'}}>Add days from today</label>
                 <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'0.375rem',marginBottom:'0.5rem'}}>
-                  {['7','14','30','90'].map(d => (
+                  {['7','14','30','90'].map(d=>(
                     <button key={d} onClick={()=>setRenewDays(d)}
                       className={renewDays===d?'btn btn-purple':'btn btn-ghost'}
-                      style={{padding:'0.4rem',fontSize:'0.78rem'}}>
-                      {d}d
-                    </button>
+                      style={{padding:'0.4rem',fontSize:'0.78rem'}}>{d}d</button>
                   ))}
                 </div>
                 <input className="input" type="number" min="1" value={renewDays}
@@ -415,51 +361,76 @@ export default function Dashboard({ token, onLogout }) {
               </p>
               <div style={{display:'flex',gap:'0.5rem',justifyContent:'flex-end'}}>
                 <button onClick={()=>setModal(null)} className="btn btn-ghost">Cancel</button>
-                <button onClick={()=>renewUser(modal.user)} className="btn btn-green">
-                  <RefreshCw size={13}/> Renew {renewDays}d
-                </button>
+                <button onClick={()=>renewUser(modal.user)} className="btn btn-green"><RefreshCw size={13}/> Renew {renewDays}d</button>
               </div>
             </div>
           </Modal>
         )}
 
-        {/* Panel link */}
-        {modal?.type === 'panel' && (
+        {/* Panel link — FIXED: real clickable link */}
+        {modal?.type==='panel' && (
           <Modal title={`Panel Link — @${modal.user.username}`} onClose={()=>setModal(null)}>
-            <div style={{display:'flex',flexDirection:'column',gap:'0.75rem'}}>
-              <p style={{fontSize:'0.75rem',color:'#475569'}}>Share this link with the client. It auto-logs them in.</p>
-              <div style={{background:'rgba(0,0,0,0.5)',borderRadius:'0.5rem',padding:'0.75rem',
-                fontFamily:'monospace',fontSize:'0.72rem',color:'#a855f7',wordBreak:'break-all',lineHeight:1.6}}>
-                {panelUrl(modal.user)}
+            <div style={{display:'flex',flexDirection:'column',gap:'0.875rem'}}>
+              <p style={{fontSize:'0.75rem',color:'#475569',lineHeight:1.6}}>
+                Send this link to your client. It contains their <strong style={{color:'#a855f7'}}>invite token</strong> — opening it automatically logs them in.
+              </p>
+
+              {/* Clickable link block */}
+              <div style={{background:'rgba(0,0,0,0.5)',borderRadius:'0.5rem',padding:'0.875rem',
+                border:'1px solid rgba(168,85,247,0.2)',display:'flex',flexDirection:'column',gap:'0.5rem'}}>
+                <a
+                  href={panelUrl(modal.user)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    fontFamily:'monospace',fontSize:'0.72rem',color:'#a855f7',
+                    wordBreak:'break-all',lineHeight:1.6,textDecoration:'underline',
+                    textDecorationColor:'rgba(168,85,247,0.4)',cursor:'pointer',
+                  }}
+                >
+                  {panelUrl(modal.user)}
+                </a>
+                <p style={{fontSize:'0.65rem',color:'#334155'}}>↑ Click to open &nbsp;•&nbsp; Or copy it below</p>
               </div>
+
+              {/* Invite token separately */}
+              <div style={{background:'rgba(0,0,0,0.35)',borderRadius:'0.5rem',padding:'0.625rem 0.875rem',
+                border:'1px solid rgba(255,255,255,0.06)'}}>
+                <p style={{fontSize:'0.62rem',color:'#475569',marginBottom:'0.25rem',textTransform:'uppercase',letterSpacing:'0.08em',fontWeight:600}}>Invite Token (standalone)</p>
+                <span style={{fontFamily:'monospace',fontSize:'0.72rem',color:'#e2e8f0',wordBreak:'break-all'}}>
+                  {modal.user.panel_token}
+                </span>
+              </div>
+
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.5rem'}}>
                 <button onClick={()=>copyText(panelUrl(modal.user),'Panel link')} className="btn btn-purple">
                   <Copy size={12}/> Copy Link
                 </button>
-                <button onClick={()=>resetPw(modal.user)} className="btn btn-ghost">
-                  <RotateCcw size={12}/> Reset Password
+                <button onClick={()=>copyText(modal.user.panel_token,'Invite token')} className="btn btn-ghost">
+                  <Copy size={12}/> Copy Token Only
                 </button>
               </div>
+
               <div style={{fontSize:'0.7rem',color:'#334155',lineHeight:1.55}}>
-                Username: <strong style={{color:'#fff'}}>@{modal.user.username}</strong> &nbsp;|&nbsp;
-                Password: <strong style={{color:'#fff'}}>user</strong>
+                Client can also log in manually by entering the invite token on the panel login page.
               </div>
+
+              <button onClick={()=>resetPw(modal.user)} className="btn btn-ghost" style={{fontSize:'0.72rem'}}>
+                <RotateCcw size={11}/> Reset password (for username login fallback)
+              </button>
             </div>
           </Modal>
         )}
 
         {/* Delete */}
-        {modal?.type === 'delete' && (
+        {modal?.type==='delete' && (
           <Modal title="Delete Client" onClose={()=>setModal(null)}>
             <p style={{color:'#94a3b8',fontSize:'0.82rem',marginBottom:'1.25rem',lineHeight:1.6}}>
-              Permanently delete <strong style={{color:'#fff'}}>@{modal.user.username}</strong>?
-              Their bot session will be stopped and all data removed. This cannot be undone.
+              Permanently delete <strong style={{color:'#fff'}}>@{modal.user.username}</strong>? Their bot will be stopped and all data removed. This cannot be undone.
             </p>
             <div style={{display:'flex',gap:'0.5rem',justifyContent:'flex-end'}}>
               <button onClick={()=>setModal(null)} className="btn btn-ghost">Cancel</button>
-              <button onClick={()=>deleteUser(modal.user)} className="btn btn-red">
-                <Trash2 size={13}/> Delete
-              </button>
+              <button onClick={()=>deleteUser(modal.user)} className="btn btn-red"><Trash2 size={13}/> Delete</button>
             </div>
           </Modal>
         )}
